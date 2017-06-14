@@ -44,7 +44,12 @@ const char* commands[32] = {
 
 int main() {
   int fd = open(path, O_RDONLY);
-  if (fd < 0) return 1;
+  if (fd < 0) {
+    printf("Error: Couldn't open %s for reading.\n", path);
+    printf("Suggestion: Maybe a permission is missing. Try running this program with with sudo.\n");
+    printf("Suggestion: Maybe the path is wrong. Fix it by editing \"g600.cpp\".\n");
+    return 1;
+  }
 
   ioctl(fd, EVIOCGRAB, 1);
   while (1) {
