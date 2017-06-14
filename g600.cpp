@@ -53,7 +53,7 @@ int main() {
 
   ioctl(fd, EVIOCGRAB, 1);
   while (1) {
-    int n = read(fd, events, sizeof(events));
+    size_t n = read(fd, events, sizeof(events));
     if (n <= 0) return 2;
     if (n < sizeof(input_event) * 2) continue;
     if (events[0].type != 4) continue;
