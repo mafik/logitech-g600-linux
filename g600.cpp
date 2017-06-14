@@ -12,39 +12,46 @@ input_event events[64];
 const char kDir[] = "/dev/input/by-id/";
 const char kPrefix[] = "usb-Logitech_Gaming_Mouse_G600_";
 const char kSuffix[] = "-if01-event-kbd";
-const char* kCommands[32] = {
-  "",  // scroll left
-  "",  // scroll right
-  "",  // G8
-  "",  // G7
-  "i3-msg workspace 1",  // G9
-  "i3-msg workspace 2",  // G10
-  "i3-msg workspace 3",  // G11
-  "",  // G12
-  "",  // G13
-  "i3-msg fullscreen toggle",  // G14
-  "",  // G15
-  "",  // G16
-  "i3-msg layout toggle",  // G17
-  "pulseaudio-ctl down",  // G18
-  "pulseaudio-ctl mute",  // G19
-  "pulseaudio-ctl up",  // G20
-  "",  // G-shift + scroll left
-  "",  // G-shift + scroll right
-  "",  // G-shift + G8
-  "",  // G-shift + G7
-  "",  // G-shift + G9
-  "",  // G-shift + G10
-  "",  // G-shift + G11
-  "",  // G-shift + G12
-  "",  // G-shift + G13
-  "",  // G-shift + G14
-  "",  // G-shift + G15
-  "",  // G-shift + G16
-  "",  // G-shift + G17
-  "",  // G-shift + G18
-  "",  // G-shift + G19
-  "",  // G-shift + G20
+
+struct Command {
+  const int scancode;
+  const char* command;
+};
+
+// ADD KEY->COMMAND MAPPINGS HERE:
+const Command kCommands[] = {
+  { 4, "xdotool key Page_Up" }, // scroll left
+  { 5, "xdotool key Page_Down" }, // scroll right
+  { 6, "xdotool key ctrl+c" }, // G8
+  { 7, "xdotool key ctrl+shift+c" }, // G7
+  { 8, "i3-msg workspace next_on_output" }, // G9
+  { 9, "i3-msg move workspace next_on_output" }, // G10
+  { 10, "xdotool key ctrl+w" }, // G11
+  { 11, "pulseaudio-ctl down" }, // G12
+  { 12, "pulseaudio-ctl mute" }, // G13
+  { 13, "xdotool key ctrl+z" }, // G14
+  { 14, "xdotool key End" }, // G15
+  { 15, "xdotool key ctrl+End" }, // G16
+  { 16, "xdotool key Return" }, // G17
+  { 17, "i3-msg fullscreen" }, // G18
+  { 18, "xdotool key ctrl+slash t" }, // G19
+  { 19, "" }, // G20
+  { 20, "xdotool key alt+Left" }, // G-shift + scroll left
+  { 21, "xdotool key alt+Right" }, // G-shift + scroll right
+  { 22, "xdotool key ctrl+v" }, // G-shift + G8
+  { 23, "xdotool key ctrl+shift+v" }, // G-shift + G7
+  { 24, "i3-msg workspace prev_on_output" }, // G-shift + G9
+  { 25, "i3-msg move workspace prev_on_output" }, // G-shift + G10
+  { 26, "i3-msg kill" }, // G-shift + G11
+  { 27, "pulseaudio-ctl up" }, // G-shift + G12
+  { 28, "pulseaudio-ctl mute" }, // G-shift + G13
+  { 29, "xdotool key ctrl+shift+z ctrl+y" }, // G-shift + G14
+  { 30, "xdotool key Home" }, // G-shift + G15
+  { 31, "xdotool key ctrl+Home" }, // G-shift + G16
+  { 32, "xdotool key Escape" }, // G-shift + G17
+  { 33, "i3-msg fullscreen" }, // G-shift + G18
+  { 34, "" }, // G-shift + G19
+  { 35, "" }, // G-shift + G20
 };
 
 bool starts_with(const char* haystack, const char* prefix) {
@@ -80,6 +87,12 @@ int find_g600(std::string* path) {
 }
 
 int main() {
+  printf("Starting G600 Linux controller.\n\n");
+  printf("It's a good idea to configure G600 with Logitech Gaming Software before running this program:\n");
+  printf(" - assign left, right, middle mouse button and vertical mouse wheel to their normal functions\n");
+  printf(" - assign the G-Shift button to \"G-Shift\"\n");
+  printf(" - assign all other keys (including horizontal mouse wheel) to arbitrary (unique) keyboard keys\n");
+  printf("\n");    
   std::string path;
   int find_error = find_g600(&path);
   if (find_error) {
@@ -104,7 +117,7 @@ int main() {
   }
 
   ioctl(fd, EVIOCGRAB, 1);
-  printf("G600 controller started successfully.\n");
+  printf("G600 controller started successfully.\n\n");
   while (1) {
     size_t n = read(fd, events, sizeof(events));
     if (n <= 0) return 2;
@@ -112,27 +125,28 @@ int main() {
     if (events[0].type != 4) continue;
     if (events[0].code != 4) continue;
     if (events[1].type != 1) continue;
-    int button = events[0].value - 0x70000 - 4;
-
-    // REMAP KEYCODES HERE
-
-    if (button >= 32) {
-      printf("Error: Pressed a keycode (%d) outside of supported range (0-31).\n", button);
-      printf("Suggestion: Configure G600 with Logitech Gaming Software before running this program:\n");
-      printf(" - assign left, right, middle mouse button and vertical mouse wheel to their normal functions\n");
-      printf(" - assign the G-Shift button to \"G-Shift\"\n");
-      printf(" - assign all other keys (including horizontal mouse wheel) to arbitrary keyboard keys\n");
-      printf("Note: It's possible to modify this program to work in the current configuration. Look into \"g600.cpp\" to remap this keycode.\n");
-      return 3;
-    }
     bool pressed = events[1].value;
-    printf("%s button %d.\n", pressed ? "Pressed" : "Released", button);
     if (!pressed) continue;
-    const char* command = kCommands[button];
-    if (strlen(command) == 0) continue;
-    printf("Executing \"%s\"...\n", command);
-    system(command);
-    printf("Done!\n");
+    int scancode = events[0].value & ~0x70000;
+
+    const Command* cmd = nullptr;
+    for (size_t i = 0; i < sizeof(kCommands) / sizeof(Command); ++i) {
+      if (kCommands[i].scancode == scancode) {
+	cmd = &kCommands[i];
+	break;
+      }
+    }
+
+    if (cmd == nullptr) {
+      printf("Warning: Pressed a key (%d) without a mapping.\n", scancode);
+      printf("Suggestion: Add a mapping by editing \"g600.cpp\".\n");
+      printf("\n");
+      continue;
+    }
+    printf("Pressed scancode %d. Mapped command: \"%s\"\n", scancode, cmd->command);
+    if (strlen(cmd->command) == 0) continue;
+    system(cmd->command);
+    printf("Subprocess finished.\n\n");
   }
   
   close(fd);
