@@ -69,6 +69,7 @@ bool ends_with(const char* haystack, const char* suffix) {
 
 // Returns non-0 on error.
 int find_g600(std::string* path) {
+  *path = kDir;
   DIR *dir;
   struct dirent *ent;
   if ((dir = opendir(kDir)) == nullptr) {
@@ -76,7 +77,6 @@ int find_g600(std::string* path) {
   }
   while ((ent = readdir(dir))) {
     if (starts_with(ent->d_name, kPrefix) && ends_with(ent->d_name, kSuffix)) {
-      *path = kDir;
       *path += ent->d_name;
       closedir(dir);
       return 0;
@@ -110,7 +110,7 @@ int main() {
   }
   int fd = open(path.c_str(), O_RDONLY);
   if (fd < 0) {
-    printf("Error: Couldn't open \"%s%s\" for reading.\n", kDir, path.c_str());
+    printf("Error: Couldn't open \"%s\" for reading.\n", path.c_str());
     printf("Reason: %s.\n", strerror(errno));
     printf("Suggestion: Maybe a permission is missing. Try running this program with with sudo.\n");
     return 1;
