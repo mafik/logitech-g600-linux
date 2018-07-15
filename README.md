@@ -9,6 +9,13 @@ Before running this program open the Logitech Gaming Software on a Windows or Ma
 1. Clone this repository.
 2. Open `g600.cpp` and fill in the commands for the keys.
 3. Compile with `g++ g600.cpp -o g600`.
-4. Run with `./g600`
+4. Run with `sudo ./g600`.
 
 For command ideas you can look at programs like `xdotool`, `xdo`, `pulseaudio-ctl`, `xclip`, `i3-msg`. You can also run your own scripts.
+
+The program needs privileges to communicate with G600 so typically it'll be started with `sudo`. Alternatively (works on Ubuntu 18.04) you can force the program to run as the `input` group with:
+
+```bash
+sudo chown .input g600
+sudo chmod g+s g600
+```
