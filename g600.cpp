@@ -16,6 +16,7 @@ const char kSuffix[] = "-if01-event-kbd";
 struct Command {
   const int scancode;
   const char* command;
+  const char* command_up;  //Executed command when user stops pressing the button
 };
 
 // ADD KEY->COMMAND MAPPINGS HERE:
@@ -52,6 +53,7 @@ const Command kCommands[] = {
   { 33, "i3-msg fullscreen" }, // G-shift + G18
   { 34, "" }, // G-shift + G19
   { 35, "" }, // G-shift + G20
+  { 37, "echo button down", "echo button up" }
 };
 
 bool starts_with(const char* haystack, const char* prefix) {
@@ -126,26 +128,30 @@ int main() {
     if (events[0].code != 4) continue;
     if (events[1].type != 1) continue;
     bool pressed = events[1].value;
-    if (!pressed) continue;
     int scancode = events[0].value & ~0x70000;
 
     const Command* cmd = nullptr;
     for (size_t i = 0; i < sizeof(kCommands) / sizeof(Command); ++i) {
       if (kCommands[i].scancode == scancode) {
-	cmd = &kCommands[i];
-	break;
+        cmd = &kCommands[i];
+        break;
       }
     }
 
     if (cmd == nullptr) {
-      printf("Warning: Pressed a key (%d) without a mapping.\n", scancode);
-      printf("Suggestion: Add a mapping by editing \"g600.cpp\".\n");
-      printf("\n");
+      if(pressed){
+        printf("Warning: Pressed a key (%d) without a mapping.\n", scancode); 
+        printf("Suggestion: Add a mapping by editing \"g600.cpp\".\n");
+        printf("\n");
+      }
       continue;
     }
-    printf("Pressed scancode %d. Mapped command: \"%s\"\n", scancode, cmd->command);
-    if (strlen(cmd->command) == 0) continue;
-    system(cmd->command);
+    const char* cmdToRun = (pressed) ? cmd->command : cmd->command_up;
+    if (!cmdToRun) continue;
+    const char* actionStr = (pressed) ? "Pressed" : "Released";
+    printf("%s scancode %d. Mapped command: \"%s\"\n",actionStr, scancode, cmdToRun);
+    if (strlen(cmdToRun) == 0) continue;
+    system(cmdToRun);
     printf("Subprocess finished.\n\n");
   }
   
