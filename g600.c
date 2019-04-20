@@ -104,7 +104,7 @@ int main() {
     printf("Error: Couldn't find G600 input device.\n");
     switch(find_error) {
     case 1: 
-      printf("Suggestion: Maybe the expected directory (%s) is wrong. Check whether this directory exists and fix it by editing \"g600.cpp\".\n", kDir);
+      printf("Suggestion: Maybe the expected directory (%s) is wrong. Check whether this directory exists and fix it by editing \"g600.c\".\n", kDir);
       break;
     case 2:
       printf("Suggestion: Maybe the expected device prefix (%s) is wrong. Check whether a device with this prefix exists in %s and fix it by editing \"g600.cpp\".\n", kPrefix, kDir);
