@@ -7,7 +7,7 @@ Before running this program open the Logitech Gaming Software on a Windows or Ma
 ## Usage
 
 1. Clone this repository.
-2. Open `g600.cpp` and fill in the commands for the keys.
+2. Open `g600.c` and fill in the commands for the keys.
 3. Compile with `gcc g600.c -o g600`.
 4. Run with `sudo ./g600`.
 
