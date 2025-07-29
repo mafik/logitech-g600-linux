@@ -1,4 +1,3 @@
-#include <array>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -13,14 +12,17 @@
 
 using namespace std;
 
-array<input_event, 64> events;
 constexpr auto kDir = "/dev/input/by-id/";
 constexpr auto kPrefix = "usb-Logitech_Gaming_Mouse_G600_";
 constexpr auto kSuffix = "-if01-event-kbd";
 
-// ADD KEY->COMMAND MAPPINGS HERE:
+// ===> ADD YOUR KEY->COMMAND MAPPINGS HERE <===
 map<int, string> down_commands = {
-    //[scancode] = "command to run",
+    // FORMAT: {scancode, "command to run"},      // <comment>
+    //
+    // The comments on the right are based on limited testing and may be
+    // different if your mouse has different key mappings. You can use them as
+    // initial guess and then tweak them if they turn out to be wrong for you.
     {4, "xdotool key Page_Up"},                   // scroll left
     {5, "xdotool key Page_Down"},                 // scroll right
     {6, "xdotool key ctrl+c"},                    // G8
@@ -53,10 +55,12 @@ map<int, string> down_commands = {
     {33, "i3-msg fullscreen"},                    // G-shift + G18
     {34, ""},                                     // G-shift + G19
     {35, ""},                                     // G-shift + G20
-    {37, "echo button down"}};
+    {37, "echo button down"},
+};
 map<int, string> up_commands = {
-    //[scancode] = "command to run",
-    {37, "echo button up"}};
+    // FORMAT: <same as above>
+    {37, "echo button up"},
+};
 
 static bool StartsWith(string_view haystack, string_view prefix) {
   if (haystack.size() < prefix.size())
@@ -146,7 +150,8 @@ int main() {
   ioctl(fd, EVIOCGRAB, 1);
   printf("G600 controller started successfully.\n\n");
   while (1) {
-    size_t n = read(fd, events.data(), sizeof(events));
+    input_event events[64];
+    size_t n = read(fd, events, sizeof(events));
     if (n <= 0)
       return 2;
     if (n < sizeof(struct input_event) * 2)
